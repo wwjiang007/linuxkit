@@ -1,4 +1,4 @@
-FROM linuxkit/alpine:86cd4f51b49fb9a078b50201d892a3c7973d48ec AS kernel-build
+FROM linuxkit/alpine:3fdc49366257e53276c6f363956a4353f95d9a81 AS kernel-build
 RUN apk add \
     argp-standalone \
     automake \
@@ -22,6 +22,7 @@ RUN apk add \
     ncurses-dev \
     openssl-dev \
     patch \
+    rsync \
     sed \
     squashfs-tools \
     tar \
@@ -37,9 +38,9 @@ ARG KERNEL_SERIES
 ARG EXTRA
 ARG DEBUG
 
-ENV WIREGUARD_VERSION=0.0.20190601
-ENV WIREGUARD_SHA256="7528461824a0174bd7d4f15e68d8f0ce9a8ea318411502b80759438e8ef65568"
-ENV WIREGUARD_URL=https://git.zx2c4.com/WireGuard/snapshot/WireGuard-${WIREGUARD_VERSION}.tar.xz
+ENV WIREGUARD_VERSION=0.0.20191226
+ENV WIREGUARD_SHA256="7c0e576459c6337bcdea692bdbec561719a15da207dc739e0e3e60ff821a5491"
+ENV WIREGUARD_URL=https://git.zx2c4.com/wireguard-linux-compat/snapshot/wireguard-linux-compat-${WIREGUARD_VERSION}.tar.xz
 
 # We copy the entire directory. This copies some unneeded files, but
 # allows us to check for the existence /patches-${KERNEL_SERIES} to
@@ -64,6 +65,26 @@ RUN KERNEL_MAJOR=$(echo ${KERNEL_VERSION} | cut -d . -f 1) && \
     gpg2 --verify linux-${KERNEL_VERSION}.tar.sign linux-${KERNEL_VERSION}.tar && \
     cat linux-${KERNEL_VERSION}.tar | tar --absolute-names -x && mv /linux-${KERNEL_VERSION} /linux
 
+
+RUN mkdir -p /out/src
+
+WORKDIR /tmp
+# Download Intel ucode, create a CPIO archive for it, and keep it in the build context
+# so the firmware can also be referenced with CONFIG_EXTRA_FIRMWARE
+ENV UCODE_REPO=https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files
+ENV UCODE_COMMIT=microcode-20191115
+RUN set -e && \
+    if [ $(uname -m) == x86_64 ]; then \
+        git clone ${UCODE_REPO} ucode && \
+        cd ucode && \
+        git checkout ${UCODE_COMMIT} && \
+        iucode_tool --normal-earlyfw --write-earlyfw=/out/intel-ucode.cpio ./intel-ucode && \
+        cp license /out/intel-ucode-license.txt && \
+        mkdir -p /lib/firmware && \
+        cp -rav ./intel-ucode /lib/firmware; \
+    fi
+
+
 WORKDIR /linux
 # Apply local specific patches if present
 RUN set -e && \
@@ -84,12 +105,13 @@ RUN set -e && \
         done; \
     fi
 
-RUN mkdir -p /out/src
+
 
 # Save kernel source
 RUN tar cJf /out/src/linux.tar.xz /linux
 
 # Kernel config
+# The s390x defconfig moved with 5.2.x
 RUN case $(uname -m) in \
     x86_64) \
         KERNEL_DEF_CONF=/linux/arch/x86/configs/x86_64_defconfig; \
@@ -98,7 +120,11 @@ RUN case $(uname -m) in \
         KERNEL_DEF_CONF=/linux/arch/arm64/configs/defconfig; \
         ;; \
     s390x) \
-        KERNEL_DEF_CONF=/linux/arch/s390/defconfig; \
+        if [ -f /linux/arch/s390/defconfig ]; then \
+            KERNEL_DEF_CONF=/linux/arch/s390/defconfig; \
+        else \
+            KERNEL_DEF_CONF=/linux/arch/s390/configs/defconfig; \
+        fi; \
         ;; \
     esac  && \
     cp /config-${KERNEL_SERIES}-$(uname -m) ${KERNEL_DEF_CONF}; \
@@ -116,7 +142,15 @@ RUN case $(uname -m) in \
 
 
 # Kernel
-RUN make -j "$(getconf _NPROCESSORS_ONLN)" KCFLAGS="-fno-pie" && \
+RUN case $(uname -m) in \
+    s390x) \
+        KCFLAGS="-fno-pie -fPIC"; \
+        ;; \
+    *) \
+        KCFLAGS="-fno-pie"; \
+        ;; \
+    esac && \
+    make -j "$(getconf _NPROCESSORS_ONLN)" KCFLAGS="$KCFLAGS" && \
     case $(uname -m) in \
     x86_64) \
         cp arch/x86_64/boot/bzImage /out/kernel; \
@@ -135,7 +169,7 @@ RUN make -j "$(getconf _NPROCESSORS_ONLN)" KCFLAGS="-fno-pie" && \
 RUN curl -fsSL -o /wireguard.tar.xz "${WIREGUARD_URL}" && \
     echo "${WIREGUARD_SHA256}  /wireguard.tar.xz" | sha256sum -c - && \
     cp /wireguard.tar.xz /out/src/ && \
-    tar -C / --one-top-level=wireguard --strip-components=2 -xJf /wireguard.tar.xz "WireGuard-${WIREGUARD_VERSION}/src" && \
+    tar -C / --one-top-level=wireguard --strip-components=2 -xJf /wireguard.tar.xz "wireguard-linux-compat-${WIREGUARD_VERSION}/src" && \
     make -j "$(getconf _NPROCESSORS_ONLN)" M="/wireguard" modules
 
 # Modules and Device Tree binaries
@@ -174,17 +208,6 @@ RUN DVER=$(basename $(find /tmp/kernel-modules/lib/modules/ -mindepth 1 -maxdept
 
 RUN printf "KERNEL_SOURCE=${KERNEL_SOURCE}\n" > /out/kernel-source-info
 
-# Download Intel ucode and create a CPIO archive for it
-ENV UCODE_REPO=https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files
-ENV UCODE_COMMIT=1dd14da6d1ea5cfbd95923653f31c04aac3aa655
-RUN set -e && \
-    if [ $(uname -m) == x86_64 ]; then \
-        git clone ${UCODE_REPO} ucode && \
-        cd ucode && \
-        git checkout ${UCODE_COMMIT} && \
-        iucode_tool --normal-earlyfw --write-earlyfw=/out/intel-ucode.cpio ./intel-ucode && \
-        cp license /out/intel-ucode-license.txt; \
-    fi
 
 FROM scratch
 ENTRYPOINT []

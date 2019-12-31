@@ -1,17 +1,17 @@
 # This is an example for building the open source components of Docker for Mac
 kernel:
-  image: linuxkit/kernel:4.19.51
+  image: linuxkit/kernel:4.19.90
   cmdline: "console=ttyS0 page_poison=1"
 init:
   - linuxkit/vpnkit-expose-port:v0.7 # install vpnkit-expose-port and vpnkit-iptables-wrapper on host
-  - linuxkit/init:1a0c6b624708b5a9e58b9a608a9ce3164e7b2908
+  - linuxkit/init:1d8e0532ca588c5ad0d9ca6038349a70bb7ac626
   - linuxkit/runc:c1f0db27e71d948f3134b31ce76276f843849b0a
-  - linuxkit/containerd:2e7e59b8af98a1cec834dc9fe7aba271bf4b0a41
+  - linuxkit/containerd:751de142273e1b5d2d247d2832d654ab92e907bc
   - linuxkit/ca-certificates:v0.7
 onboot:
   # support metadata for optional config in /run/config
   - name: metadata
-    image: linuxkit/metadata:v0.7
+    image: linuxkit/metadata:2dade7485ac60c765b16a34a42afc6431da938cf
   - name: sysctl
     image: linuxkit/sysctl:v0.7
   - name: sysfs
@@ -20,13 +20,13 @@ onboot:
     image: linuxkit/binfmt:v0.7
   # Format and mount the disk image in /var/lib/docker
   - name: format
-    image: linuxkit/format:v0.7
+    image: linuxkit/format:65b9e0a76d0b9fb8ac5c5f3bc8d3131109290f56
   - name: mount
     image: linuxkit/mount:v0.7
     command: ["/usr/bin/mountie", "/var/lib"]
   # make a swap file on the mounted disk
   - name: swap
-    image: linuxkit/swap:f8b0434963b4c9114db473aab3b9409bccd4f85b
+    image: linuxkit/swap:7f17cd1dfca99f643f91c895e19ab61df09aa870
     command: ["/swap.sh", "--path", "/var/lib/swap", "--size", "1024M"]
   # mount-vpnkit mounts the 9p share used by vpnkit to coordinate port forwarding
   - name: mount-vpnkit

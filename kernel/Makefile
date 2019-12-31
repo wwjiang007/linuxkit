@@ -149,9 +149,9 @@ show-tags: show-tag_$(2)$(3)$(4)
 # with DCT as part of the dependency on build_$(2)$(3)$(4) and then build
 # with DOCKER_CONTENT_TRUST explicitly set to 0
 
-# Skip perf build for now. See:
-# https://github.com/linuxkit/linuxkit/issues/3299
-ifeq ($(ARCH),SKIP)
+# Only build perf on latest LTS and stable kernels.  Skip arm64.
+ifeq ($(2), $(filter $(2),5.4.x 4.19.x))
+ifneq ($(ARCH),aarch64)
 build_perf_$(2)$(3)$(4): build_$(2)$(3)$(4)
 	docker pull $(ORG)/$(IMAGE_PERF):$(1)$(3)$(4)-$(TAG)$(SUFFIX) || \
 		 DOCKER_CONTENT_TRUST=0 docker build -f Dockerfile.perf \
@@ -185,10 +185,11 @@ forcebuild: forcebuild_perf_$(2)$(3)$(4)
 push: push_perf_$(2)$(3)$(4)
 forcepush: forcepush_perf_$(2)$(3)$(4)
 endif
+endif
 
 # Only build BCC on x86 and only on latest LTS and latest stable kernels.
 ifeq ($(ARCH),x86_64)
-ifneq ($(2), $(filter $(2),4.9.x))
+ifeq ($(2), $(filter $(2),5.4.x 4.19.x))
 build_bcc_$(2)$(3)$(4): build_$(2)$(3)$(4)
 	docker pull $(ORG)/$(IMAGE_BCC):$(1)$(3)$(4)-$(TAG)$(SUFFIX) || \
 		 DOCKER_CONTENT_TRUST=0 docker build -f Dockerfile.bcc \
@@ -251,25 +252,32 @@ endef
 # Debug targets only for latest stable and LTS stable
 #
 ifeq ($(ARCH),x86_64)
-$(eval $(call kernel,5.1.11,5.1.x,$(EXTRA),$(DEBUG)))
-$(eval $(call kernel,4.19.52,4.19.x,$(EXTRA),$(DEBUG)))
-$(eval $(call kernel,4.19.52,4.19.x,,-dbg))
-$(eval $(call kernel,4.19.50,4.19.x,-rt,))
-$(eval $(call kernel,4.14.127,4.14.x,$(EXTRA),$(DEBUG)))
-$(eval $(call kernel,4.9.182,4.9.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,5.4.4,5.4.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,5.3.17,5.3.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,4.19.90,4.19.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,4.19.90,4.19.x,,-dbg))
+$(eval $(call kernel,4.19.59,4.19.x,-rt,))
+$(eval $(call kernel,4.14.159,4.14.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,4.9.206,4.9.x,$(EXTRA),$(DEBUG)))
 
 else ifeq ($(ARCH),aarch64)
-$(eval $(call kernel,5.1.11,5.1.x,$(EXTRA),$(DEBUG)))
-$(eval $(call kernel,4.19.52,4.19.x,$(EXTRA),$(DEBUG)))
-$(eval $(call kernel,4.19.50,4.19.x,-rt,))
+$(eval $(call kernel,5.4.4,5.4.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,4.19.90,4.19.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,4.19.59,4.19.x,-rt,))
 
 else ifeq ($(ARCH),s390x)
-$(eval $(call kernel,5.1.11,5.1.x,$(EXTRA),$(DEBUG)))
-$(eval $(call kernel,4.19.52,4.19.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,5.4.4,5.4.x,$(EXTRA),$(DEBUG)))
+$(eval $(call kernel,4.19.90,4.19.x,$(EXTRA),$(DEBUG)))
 endif
 
 # Target for kernel config
 kconfig:
+ifeq (${KCONFIG_TAG},)
 	docker build --no-cache -f Dockerfile.kconfig \
 		--build-arg KERNEL_VERSIONS="$(KERNEL_VERSIONS)" \
 		-t linuxkit/kconfig  .
+else
+	docker build --no-cache -f Dockerfile.kconfig \
+		--build-arg KERNEL_VERSIONS="$(KERNEL_VERSIONS)" \
+		-t linuxkit/kconfig:${KCONFIG_TAG}  .
+endif
