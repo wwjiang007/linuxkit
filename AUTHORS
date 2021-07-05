@@ -6,12 +6,15 @@ Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
 Alan Raison <alanraison@users.noreply.github.com>
 Alex Ellis <alexellis2@gmail.com>
 Alex Johnson <hello@alex-johnson.net>
+Alex Szakaly <alex.szakaly@gmail.com>
 Alexander Slesarev <alex.slesarev@nudatasecurity.com>
 Alice Frosi <alice@linux.vnet.ibm.com>
 Amir Chaudhry <amir.chaudhry@docker.com>
 Anil Madhavapeddy <anil.madhavapeddy@docker.com>
+Arthur Lutz <arthur.lutz@logilab.fr>
 Asbjorn Enge <asbjorn@hanafjedle.net>
 Avi Deitcher <avi@deitcher.net>
+Aymen EL AMRI <aymen@eralabs.io>
 Ben Allen <bsallen@alcf.anl.gov>
 Bill Kerr <bill@generalbill.com>
 Björn Ingeson <bjorn.ingeson@gmail.com>
@@ -19,6 +22,7 @@ Brice Figureau <brice-puppet@daysofwonder.com>
 Carlton-Semple <carlton.semple@ibm.com>
 Chanwit Kaewkasi <chanwit@gmail.com>
 Christian Wuerdig <christian.wuerdig@gmail.com>
+Clovis Durand <cd.clovel19@gmail.com>
 Craig Ingram <cingram@heroku.com>
 Damiano Donati <damiano.donati@gmail.com>
 Dan Finneran <dan@thebsdbox.co.uk>
@@ -41,7 +45,9 @@ Edward Vielmetti <edward.vielmetti@gmail.com>
 Emily Casey <ecasey@pivotal.io>
 Eric Briand <eric.briand@gmail.com>
 Evan Hazlett <ejhazlett@gmail.com>
+Federico Pellegatta <12744504+federico-pellegatta@users.noreply.github.com>
 French Ben <frenchben@docker.com>
+Frédéric Dalleau <frederic.dalleau@docker.com>
 functor <meehow@gmail.com>
 Gabriel Chabot <gabriel.chabot@qarnot-computing.com>
 Garth Bushell <garth.bushell@oracle.com>
@@ -70,6 +76,7 @@ Justin Barrick <jbarrick@cloudflare.com>
 Justin Cormack <justin.cormack@docker.com>
 Justin Ko <justin.ko@oracle.com>
 Justin Terry (VM) <juterry@microsoft.com>
+Karol Woźniak <wozniakk@gmail.com>
 Ken Cochrane <ken.cochrane@docker.com>
 Krister Johansen <krister.johansen@oracle.com>
 Krisztian Horvath <keyki.kk@gmail.com>
@@ -89,6 +96,7 @@ Mathieu Pasquet <mathieu.pasquet@alterway.fr>
 Matt Bajor <matt.bajor@workday.com>
 Matt Bentley <matt.bentley@docker.com>
 Matt Johnson <matjohn2@cisco.com>
+Michael Aldridge <aldridge.mac@gmail.com>
 Michel Courtine <michel.courtine@docker.com>
 Mickaël Salaün <mic@digikod.net>
 Mindy Preston <mindy.preston@docker.com>
@@ -103,6 +111,7 @@ Olaf Bergner <olaf.bergner@gmx.de>
 Olaf Flebbe <of@oflebbe.de>
 Omar Ramadan <omar.ramadan93@gmail.com>
 Patrik Cyvoct <patrik@ptrk.io>
+Petr Fedchenkov <giggsoff@gmail.com>
 Phil Estes <estesp@linux.vnet.ibm.com>
 Pierre Gayvallet <pierre.gayvallet@docker.com>
 Pratik Mallya <mallya@us.ibm.com>
@@ -118,6 +127,7 @@ Roman Shaposhnik <rvs@zededa.com>
 Rui Lopes <rgl@ruilopes.com>
 Ryoga Saito <proelbtn@gmail.com>
 Sachi King <nakato@nakato.io>
+salman aljammaz <s@aljmz.com>
 schrotthaufen <schrotthaufen@invalid.invalid>
 Scott Coulton <scott.coulton@puppet.com>
 Sebastiaan van Stijn <sebastiaan.vanstijn@docker.com>

@@ -1,4 +1,4 @@
-FROM linuxkit/alpine:86cd4f51b49fb9a078b50201d892a3c7973d48ec as alpine
+FROM linuxkit/alpine:0c069d0fd7defddb6e03925fcd4915407db0c9e1 as alpine
 
 RUN apk add ca-certificates
 

@@ -11,9 +11,10 @@ are downloaded at build time to create an image. The image is self-contained and
 so it can be tested reliably for continuous delivery.
 
 Components are specified as Docker images which are pulled from a registry during build if they
-are not available locally. The Docker images are optionally verified with Docker Content Trust.
+are not available locally. See [image-cache](./image-cache.md) for more details on local caching.
+The Docker images are optionally verified with Docker Content Trust.
 For private registries or private repositories on a registry credentials provided via
-`docker login` are re-used. 
+`docker login` are re-used.
 
 The configuration file is processed in the order `kernel`, `init`, `onboot`, `onshutdown`,
 `services`, `files`. Each section adds files to the root file system. Sections may be omitted.
@@ -124,19 +125,6 @@ file:
 
 Because a `tmpfs` is mounted onto `/var`, `/run`, and `/tmp` by default, the `tmpfs` mounts will shadow anything specified in `files` section for those directories.
 
-## `trust`
-
-The `trust` section specifies which build components are to be cryptographically verified with
-[Docker Content Trust](https://docs.docker.com/engine/security/trust/content_trust/) prior to pulling.
-Trust is a central concern in any build system, and LinuxKit's is no exception: Docker Content Trust provides authenticity,
-integrity, and freshness guarantees for the components it verifies.  The LinuxKit maintainers are responsible for signing
-`linuxkit` components, though collaborators can sign their own images with Docker Content Trust or [Notary](https://github.com/docker/notary).
-
-- `image` lists which individual images to enforce pulling with Docker Content Trust.
-The image name may include tag or digest, but the matching also succeeds if the base image name is the same.
-- `org` lists which organizations for which Docker Content Trust is to be enforced across all images,
-for example `linuxkit` is the org for `linuxkit/kernel`
-
 ## Image specification
 
 Entries in the `onboot` and `services` sections specify an OCI image and
@@ -144,7 +132,9 @@ options. Default values may be specified using the `org.mobyproject.config` imag
 For more details see the [OCI specification](https://github.com/opencontainers/runtime-spec/blob/master/spec.md).
 
 If the `org.mobylinux.config` label is set in the image, that specifies default values for these fields if they
-are not set in the yaml file. You can override the label by setting the value, or setting it to be empty to remove
+are not set in the yaml file. While most fields are _replaced_ if they are specified in the yaml file,
+some support _add_ via the format `<field>.add`; see below.
+You can override the label entirely by setting the value, or setting it to be empty to remove
 the specification for that value in the label.
 
 If you need an OCI option that is not specified here please open an issue or pull request as the list is not yet
@@ -159,6 +149,7 @@ bind mounted into a container.
   extracted from this so they need not be filled in.
 - `capabilities` the Linux capabilities required, for example `CAP_SYS_ADMIN`. If there is a single
   capability `all` then all capabilities are added.
+- `capabilities.add` the Linux capabilities required, but these are added to the defaults, rather than overriding them.
 - `ambient` the Linux ambient capabilities (capabilities passed to non root users) that are required.
 - `mounts` is the full form for specifying a mount, which requires `type`, `source`, `destination`
   and a list of `options`. If any fields are omitted, sensible defaults are used if possible, for example
@@ -166,6 +157,7 @@ bind mounted into a container.
   can be replaced by specifying a mount with new options here at the same mount point.
 - `binds` is a simpler interface to specify bind mounts, accepting a string like `/src:/dest:opt1,opt2`
   similar to the `-v` option for bind mounts in Docker.
+- `binds.add` is a simpler interface to specify bind mounts, but these are added to the defaults, rather than overriding them.
 - `tmpfs` is a simpler interface to mount a `tmpfs`, like `--tmpfs` in Docker, taking `/dest:opt1,opt2`.
 - `command` will override the command and entrypoint in the image with a new list of commands.
 - `env` will override the environment in the image with a new environment list. Specify variables as `VAR=value`.

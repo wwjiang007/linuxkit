@@ -1,4 +1,7 @@
-FROM linuxkit/alpine:3fdc49366257e53276c6f363956a4353f95d9a81 AS kernel-build
+ARG BUILD_IMAGE
+ARG KERNEL_VERSIONS
+
+FROM ${BUILD_IMAGE} AS kernel-build
 RUN apk add \
     argp-standalone \
     bison \
@@ -13,8 +16,6 @@ RUN apk add \
     ncurses-dev \
     patch \
     xz
-
-ARG KERNEL_VERSIONS
 
 COPY / /
 

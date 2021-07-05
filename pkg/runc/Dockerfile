@@ -1,4 +1,4 @@
-FROM linuxkit/alpine:86cd4f51b49fb9a078b50201d892a3c7973d48ec as alpine
+FROM linuxkit/alpine:0c069d0fd7defddb6e03925fcd4915407db0c9e1 as alpine
 RUN \
   apk add \
   bash \
@@ -7,11 +7,12 @@ RUN \
   go \
   libc-dev \
   libseccomp-dev \
+  libseccomp-static \
   linux-headers \
   make \
   && true
-ENV GOPATH=/go PATH=$PATH:/go/bin
-ENV RUNC_COMMIT=425e105d5a03fabd737a126ad93d62a9eeede87f
+ENV GOPATH=/go PATH=$PATH:/go/bin GO111MODULE=off
+ENV RUNC_COMMIT=v1.0.0-rc10
 RUN mkdir -p $GOPATH/src/github.com/opencontainers && \
   cd $GOPATH/src/github.com/opencontainers && \
   git clone https://github.com/opencontainers/runc.git

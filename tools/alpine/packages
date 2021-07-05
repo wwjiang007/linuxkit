@@ -49,7 +49,6 @@ gettext-dev
 git
 gmp-dev
 gnupg
-go
 grep
 hvtools
 installkernel
@@ -66,9 +65,10 @@ libc-utils
 libc6-compat
 libcap-ng-dev
 libedit-dev
-libelf-dev
+libelf-static
 libressl-dev
 libseccomp-dev
+libseccomp-static
 libtirpc-dev
 libtool
 linux-headers
@@ -88,12 +88,13 @@ open-iscsi
 openntpd
 openrc
 openresolv
+openssh-client
 openssh-server
 openssl
 openssl-dev
 patch
 pigz
-python
+python2
 python3
 qemu-aarch64
 qemu-arm
@@ -119,6 +120,7 @@ tzdata
 util-linux
 util-linux-dev
 vim
+wireguard-tools
 wireless-tools
 wpa_supplicant
 xfsprogs
@@ -128,3 +130,4 @@ xz
 xz-dev
 zfs
 zlib-dev
+zlib-static

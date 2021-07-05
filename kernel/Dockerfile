@@ -1,4 +1,6 @@
-FROM linuxkit/alpine:3fdc49366257e53276c6f363956a4353f95d9a81 AS kernel-build
+ARG BUILD_IMAGE
+FROM ${BUILD_IMAGE} AS kernel-build
+ARG BUILD_IMAGE
 RUN apk add \
     argp-standalone \
     automake \
@@ -30,22 +32,20 @@ RUN apk add \
     xz-dev \
     zlib-dev
 
-# libunwind-dev pkg is missed from arm64 now, below statement will be removed if the pkg is available.
-RUN [ $(uname -m) == x86_64 ] && apk add libunwind-dev || true
+# libunwind-dev pkg is missing for s390x for now. Only install on other arch
+RUN [ $(uname -m) != s390x ] && apk add libunwind-dev || true
 
 ARG KERNEL_VERSION
 ARG KERNEL_SERIES
 ARG EXTRA
 ARG DEBUG
 
-ENV WIREGUARD_VERSION=0.0.20191226
-ENV WIREGUARD_SHA256="7c0e576459c6337bcdea692bdbec561719a15da207dc739e0e3e60ff821a5491"
-ENV WIREGUARD_URL=https://git.zx2c4.com/wireguard-linux-compat/snapshot/wireguard-linux-compat-${WIREGUARD_VERSION}.tar.xz
-
 # We copy the entire directory. This copies some unneeded files, but
 # allows us to check for the existence /patches-${KERNEL_SERIES} to
 # build kernels without patches.
 COPY / /
+
+RUN mkdir -p /out/src
 
 # Download and verify kernel
 # PGP keys: 589DA6B1 (greg@kroah.com) & 6092693E (autosigner@kernel.org) & 00411886 (torvalds@linux-foundation.org)
@@ -63,16 +63,14 @@ RUN KERNEL_MAJOR=$(echo ${KERNEL_VERSION} | cut -d . -f 1) && \
     xz -d linux-${KERNEL_VERSION}.tar.xz && \
     curl -fsSLO ${KERNEL_PGP2_SIGN} && \
     gpg2 --verify linux-${KERNEL_VERSION}.tar.sign linux-${KERNEL_VERSION}.tar && \
-    cat linux-${KERNEL_VERSION}.tar | tar --absolute-names -x && mv /linux-${KERNEL_VERSION} /linux
-
-
-RUN mkdir -p /out/src
+    cat linux-${KERNEL_VERSION}.tar | tar --absolute-names -x && mv /linux-${KERNEL_VERSION} /linux && \
+    printf "KERNEL_SOURCE=${KERNEL_SOURCE}\n" > /out/kernel-source-info
 
 WORKDIR /tmp
 # Download Intel ucode, create a CPIO archive for it, and keep it in the build context
 # so the firmware can also be referenced with CONFIG_EXTRA_FIRMWARE
 ENV UCODE_REPO=https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files
-ENV UCODE_COMMIT=microcode-20191115
+ENV UCODE_COMMIT=microcode-20210216
 RUN set -e && \
     if [ $(uname -m) == x86_64 ]; then \
         git clone ${UCODE_REPO} ucode && \
@@ -104,8 +102,6 @@ RUN set -e && \
             patch -t -F0 -N -u -p1 < "$patch"; \
         done; \
     fi
-
-
 
 # Save kernel source
 RUN tar cJf /out/src/linux.tar.xz /linux
@@ -165,16 +161,8 @@ RUN case $(uname -m) in \
     cp System.map /out && \
     ([ -n "${DEBUG}" ] && cp vmlinux /out || true)
 
-# WireGuard
-RUN curl -fsSL -o /wireguard.tar.xz "${WIREGUARD_URL}" && \
-    echo "${WIREGUARD_SHA256}  /wireguard.tar.xz" | sha256sum -c - && \
-    cp /wireguard.tar.xz /out/src/ && \
-    tar -C / --one-top-level=wireguard --strip-components=2 -xJf /wireguard.tar.xz "wireguard-linux-compat-${WIREGUARD_VERSION}/src" && \
-    make -j "$(getconf _NPROCESSORS_ONLN)" M="/wireguard" modules
-
 # Modules and Device Tree binaries
 RUN make INSTALL_MOD_PATH=/tmp/kernel-modules modules_install && \
-    make INSTALL_MOD_PATH=/tmp/kernel-modules M="/wireguard" modules_install && \
     ( DVER=$(basename $(find /tmp/kernel-modules/lib/modules/ -mindepth 1 -maxdepth 1)) && \
       cd /tmp/kernel-modules/lib/modules/$DVER && \
       rm build source && \
@@ -206,8 +194,7 @@ RUN DVER=$(basename $(find /tmp/kernel-modules/lib/modules/ -mindepth 1 -maxdept
          tar cf - -T - | (cd $dir; tar xf -) && \
     ( cd /tmp && tar cf /out/kernel-dev.tar usr/src )
 
-RUN printf "KERNEL_SOURCE=${KERNEL_SOURCE}\n" > /out/kernel-source-info
-
+RUN printf "${BUILD_IMAGE}" > /out/kernel-builder
 
 FROM scratch
 ENTRYPOINT []

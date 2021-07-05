@@ -1,5 +1,5 @@
 # We need the `fstrim` binary:
-FROM linuxkit/alpine:86cd4f51b49fb9a078b50201d892a3c7973d48ec AS mirror
+FROM linuxkit/alpine:0c069d0fd7defddb6e03925fcd4915407db0c9e1 AS mirror
 RUN mkdir -p /out/etc/apk && cp -r /etc/apk/* /out/etc/apk/
 RUN apk add --no-cache --initdb -p /out \
     alpine-baselayout \
@@ -11,7 +11,9 @@ RUN rm -rf /out/etc/apk /out/lib/apk /out/var/cache
 
 # We also need the Go binary which calls it:
 RUN apk add --no-cache go musl-dev
-ENV GOPATH=/go PATH=$PATH:/go/bin
+ENV GOPATH=/go PATH=$PATH:/go/bin GO111MODULE=off
+# Hack to work around an issue with go on arm64 requiring gcc
+RUN [ $(uname -m) = aarch64 ] && apk add --no-cache gcc || true
 
 COPY .  /go/src/trim-after-delete
 RUN go-compile.sh /go/src/trim-after-delete
